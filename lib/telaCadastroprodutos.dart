@@ -61,6 +61,7 @@ final valorField = Container(
         keyboardType: TextInputType.number,
         obscureText: false,
         inputFormatters: [
+            //FilteringTextInputFormatter(filterPattern, allow: null)
             BlacklistingTextInputFormatter(RegExp("[- ,]"))
         ],
         decoration: InputDecoration(
