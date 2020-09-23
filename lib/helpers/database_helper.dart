@@ -74,15 +74,42 @@ class DatabaseHelper{
   }
 
   //retorna toda a lista de produtos
-  Future<List<Produto>> getProdutos() async{
+  Future<List<Produto>> getProdutos({String nome}) async{
     Database db = await this.database;
 
-    var resultado = await db.query(produtoTable);
+      var resultado = await db.query(produtoTable);
 
-    List<Produto> lista = resultado.isNotEmpty ? resultado.map(
-      (c) => Produto.fromMap(c)).toList(): [];
+      List<Produto> lista = resultado.isNotEmpty ? resultado.map(
+        (c) => Produto.fromMap(c)).toList(): [];
 
-    return lista;
+
+    if(nome != null && nome.isNotEmpty)
+    {
+      lista = lista.where((u) => (u.descricao.toLowerCase().contains(nome.toLowerCase()))).toList();
+    }
+
+      return lista;
+  }
+
+  Future<List<Produto>> getProdutos2({String nome, List<Produto> produtos}) async{
+    Database db = await this.database;
+
+      var resultado = await db.query(produtoTable);
+
+      List<Produto> lista = resultado.isNotEmpty ? resultado.map(
+        (c) => Produto.fromMap(c)).toList(): [];
+
+
+    if(nome != null && nome.isNotEmpty)
+    {
+      lista = lista.where((u) => (u.descricao.toLowerCase().contains(nome.toLowerCase()))).toList();
+    }
+    if(produtos != null && produtos.isNotEmpty){
+      for (Produto p in produtos) {
+        lista = lista.where((u) => (u.codigo != p.codigo)).toList();  
+      }
+    }
+      return lista;
   }
 
   //Atualizar produto

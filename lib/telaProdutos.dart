@@ -14,6 +14,8 @@ class _WidgetTelaProdutosState extends State<WidgetTelaProdutos> {
   DatabaseHelper db = DatabaseHelper();
   List<Produto> produtos = List<Produto>();
 
+  final _codigoController = TextEditingController();
+
   /*
   _listaProdutos(BuildContext context, int index){
     return GestureDetector(
@@ -36,90 +38,35 @@ class _WidgetTelaProdutosState extends State<WidgetTelaProdutos> {
   @override
   void initState(){
     super.initState();
+    _exibeProdutos();
+  }
 
-    /*
-    Produto p1 = Produto('x1abc', 'roupa1', 2, 40.9);
-    db.insertProduto(p1);
-
-    Produto p2 = Produto('23abc', 'roupa2', 4, 50);
-    db.insertProduto(p2);
-    
-    db.getProdutos().then( (lista){
-      print(lista);
+  _exibeProdutos({String nome}){
+    db.getProdutos(nome: nome).then( (lista){
+      setState(() {
+        produtos = lista;
+      });
     });
-    */
-
+    /*
+    if(_codigoController.toString() == ""){
     db.getProdutos().then( (lista){
       setState(() {
         produtos = lista;
       });
     });
-    
+  }
+  else{
+    db.getProduto(_codigoController.toString()).then( (lista){
+      setState(() {
+        produtos = lista;
+      });
+    });
+  }
+  */
   }
 
   @override
   Widget build(BuildContext context) {
-
-    final produtoField = Container(
-      child: TextField(
-        obscureText: false,
-        decoration: InputDecoration(
-          contentPadding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-          labelText: "Pesquisar por produto.",
-          isDense: true,
-        )
-      )
-    );
-
-    final tabelaField = Container(
-      padding: EdgeInsets.all(5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        //width: 200,
-        children: <Widget>[ 
-          DataTable(
-            
-            columnSpacing: 25.5,
-          columns: [
-            DataColumn(label: Text("Código")),
-            DataColumn(label: Text("Qtd")),
-            DataColumn(label: Text("Descrição")),
-            DataColumn(label: Text("Valor")),
-            DataColumn(label: Text("Delete")),
-          ], 
-          rows: produtos.map((produto) => DataRow(
-            cells: [
-              DataCell(Text(produto.codigo),),
-              DataCell(Text(produto.qtd.toString()),),
-              DataCell(Text(produto.descricao),),
-              DataCell(Text(produto.valor.toString()),),
-
-              DataCell(IconButton(
-                icon: Icon(Icons.delete), 
-                onPressed: (){
-                  //Deleta o produto
-                  db.deleteProduto(produto.codigo);
-
-                  //Pega a nova lista
-                  db.getProdutos().then( (lista){
-                  setState(() {
-                    produtos = lista;
-                    });
-                  });
-
-                }
-              )
-              ),
-            ]
-          ),
-          ).toList(),
-          ),
-        ]
-    )
-    );
-
-
 
     return Scaffold(
       appBar: AppBar(
@@ -133,8 +80,8 @@ class _WidgetTelaProdutosState extends State<WidgetTelaProdutos> {
           padding: const EdgeInsets.all(5.0),
           child: Column(
             children: <Widget>[
-              SizedBox(height: 0), produtoField,
-              SizedBox(height: 0), tabelaField,
+              SizedBox(height: 0), produtoField(),
+              Expanded(child: tabelaField()),
             ]
           )
       ),
@@ -164,10 +111,7 @@ class _WidgetTelaProdutosState extends State<WidgetTelaProdutos> {
 
                   IconButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (BuildContext context) => WidgetCadastraProduto()));
+                      _exibePaginaCadastroProdutos();
                     },
                     icon: Icon(Icons.add),
                     tooltip: "Cadastrar novo produto."
@@ -190,5 +134,84 @@ class _WidgetTelaProdutosState extends State<WidgetTelaProdutos> {
       ),
 
     );
+  }
+
+  produtoField(){
+    return Container(
+      child: TextField(
+        controller: _codigoController,
+        obscureText: false,
+        onChanged: (text){
+          _exibeProdutos(nome: text);
+        },
+        decoration: InputDecoration(
+          contentPadding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+          labelText: "Pesquisar por produto.",
+          isDense: true,
+        )
+      )
+    );
+  }
+
+  SingleChildScrollView tabelaField(){
+    return SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              child: DataTable(
+                
+                columnSpacing: 24,
+              columns: [
+                DataColumn(label: Text("Código")),
+                DataColumn(label: Text("Qtd")),
+                DataColumn(label: Text("Descrição")),
+                DataColumn(label: Text("Valor")),
+                DataColumn(label: Text("Editar")),
+              ], 
+              rows: produtos.map((produto) => DataRow(
+                cells: [
+                  DataCell(Text(produto.codigo),),
+                  DataCell(Text(produto.qtd.toString()),),
+                  DataCell(Text(produto.descricao),),
+                  DataCell(Text(produto.valor.toString()),),
+
+                  DataCell(IconButton(
+                    icon: Icon(Icons.edit), 
+                    onPressed: (){
+                      _exibePaginaCadastroProdutos(produto: produto);
+                    }
+                  )
+                  ),
+                ]
+              ),
+              ).toList(),
+              ),
+          );
+  }
+  
+  void _exibePaginaCadastroProdutos({Produto produto}) async{
+    final produtoRecebido = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) => WidgetCadastraProduto(produto: produto)));
+
+        if(produtoRecebido != null){
+          if(produtoRecebido == 'delete'){
+            //print('deletando');
+            await db.deleteProduto(produto.codigo);
+          }
+          else{
+            if(produto != null){
+              //print('alterando');
+              await db.updateProduto(produtoRecebido);
+            }
+            else{
+              //print('inserindo');
+              await db.insertProduto(produtoRecebido);
+            }
+          }
+          
+
+          _exibeProdutos();
+        }
   }
 }

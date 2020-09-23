@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:projeto_pdm/telaSelecaoprodutos.dart';
+import 'package:projeto_pdm/models/produto.dart';
 
 class WidgetPedido extends StatefulWidget {
   @override
@@ -6,22 +8,11 @@ class WidgetPedido extends StatefulWidget {
 }
 
 class _WidgetPedidoState extends State<WidgetPedido> {
+  List<Produto> listaprodutos = List<Produto>();
 
   @override
-  Widget build(BuildContext context) {
-
-    final nomeRevendedoraField = Container(
-      child: TextField(
-      obscureText: false,
-      decoration: InputDecoration(
-        contentPadding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-        labelText: "Nome da Revendedora(o)",
-        isDense: true,
-      )
-    )
-    );
-
+  Widget build(BuildContext context) {    
+    /*
     final tabelaField = Container(
       padding: EdgeInsets.fromLTRB(5, 15.0, 5, 15.0),
       child: Row(
@@ -35,17 +26,35 @@ class _WidgetPedidoState extends State<WidgetPedido> {
             DataColumn(label: Text("Qtd")),
             DataColumn(label: Text("Descrição")),
             DataColumn(label: Text("Valor")),
+            DataColumn(label: Text("Remover")),
           ], 
-          rows: [],
+          rows: listaprodutos.map((produto) => DataRow(
+                cells: [
+                  DataCell(Text(produto.codigo),),
+                  DataCell(Text(produto.qtd.toString()),),
+                  DataCell(Text(produto.descricao),),
+                  DataCell(Text(produto.valor.toString()),),
+
+                  DataCell(IconButton(
+                    icon: Icon(Icons.delete), 
+                    onPressed: (){
+                      print("pressionado");
+                      //_exibePaginaCadastroProdutos(produto: produto);
+                    }
+                  )
+                  ),
+                ]
+              ),
+              ).toList(),
           )
         ]
     )
     );
-
+    */
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Cadastrar produtos"),
+        title: Text("Criar pedido"),
         centerTitle: true,
       ),
 
@@ -54,8 +63,8 @@ class _WidgetPedidoState extends State<WidgetPedido> {
           padding: const EdgeInsets.all(10.0),
           child: Column(
             children: <Widget>[
-              SizedBox(height: 5.0), nomeRevendedoraField,
-              SizedBox(height: 10.0), tabelaField,
+              SizedBox(height: 5.0), revendedoraField(),
+              Expanded(child: tabelaField()),
               
               
             ]
@@ -65,7 +74,9 @@ class _WidgetPedidoState extends State<WidgetPedido> {
 
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
-        onPressed:  () {print("Pressionado");},
+        onPressed:  () {
+          _exibePaginaSelecaoProdutos();
+          },
       ),
 
       bottomNavigationBar: BottomAppBar(
@@ -98,4 +109,73 @@ class _WidgetPedidoState extends State<WidgetPedido> {
     );
     
   }
+
+  void _removeProduto(Produto produto){
+    setState(() {
+        listaprodutos.remove(produto);
+    });
+  }
+  void _exibePaginaSelecaoProdutos({List<Produto> produtos}) async{
+    final produtoRecebido = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) => WidgetTelaSelecaoProdutos(listaprodutos)));
+
+    if(produtoRecebido != null)
+    {
+      setState(() {
+        listaprodutos.add(produtoRecebido);
+      });
+      
+    }
+  }
+
+  revendedoraField(){
+    return Container(
+      child: TextField(
+      obscureText: false,
+      decoration: InputDecoration(
+        contentPadding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+        labelText: "Nome da Revendedora(o)",
+        isDense: true,
+      )
+    )
+    );
+  }
+
+  SingleChildScrollView tabelaField(){
+    return SingleChildScrollView(
+      scrollDirection: Axis.vertical,
+      child: DataTable(
+            columnSpacing: 24,
+          columns: [
+            DataColumn(label: Text("Código")),
+            DataColumn(label: Text("Qtd")),
+            DataColumn(label: Text("Descrição")),
+            DataColumn(label: Text("Valor")),
+            DataColumn(label: Text("Remover")),
+          ], 
+          rows: listaprodutos.map((produto) => DataRow(
+                cells: [
+                  DataCell(Text(produto.codigo),),
+                  DataCell(Text(produto.qtd.toString()),),
+                  DataCell(Text(produto.descricao),),
+                  DataCell(Text(produto.valor.toString()),),
+
+                  DataCell(IconButton(
+                    icon: Icon(Icons.delete), 
+                    onPressed: (){
+                      _removeProduto(produto);
+                      //_exibePaginaCadastroProdutos(produto: produto);
+                    }
+                  )
+                  ),
+                ]
+              ),
+              ).toList(),
+              
+          )
+    );
+    }
 }
