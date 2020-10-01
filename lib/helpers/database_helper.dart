@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:projeto_pdm/models/pedidos.dart';
 import 'package:projeto_pdm/models/produto.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -8,11 +9,18 @@ class DatabaseHelper{
   static DatabaseHelper _databaseHelper;
   static Database _database;
 
+  //Para tabela de produtos
   String produtoTable = 'produto';
   String colCodigo = 'codigo';
   String colDescricao = 'descricao';
   String colQtd = 'qtd';
   String colValor = 'valor';
+
+  //Para tabela de pedidos
+  String pedidoTable = 'pedido';
+  String colPedidoId = 'id';
+  String colPedidoPath = 'path';
+  String colPedidoRevendedora = 'revendedora';
 
 
   //construtor paa instanciar a classe
@@ -36,7 +44,7 @@ class DatabaseHelper{
   Future<Database> initializeDatabase() async{
     Directory directory = await getApplicationDocumentsDirectory();
 
-    String path = directory.path + 'produtos.db';
+    String path = directory.path + 'meuAplicativo.db';
 
     var produtosDatabase = await openDatabase(path, version: 1, onCreate: _createDb);
     return produtosDatabase;
@@ -45,7 +53,71 @@ class DatabaseHelper{
   void _createDb(Database db, int newVersion) async{
     await db.execute('CREATE TABLE $produtoTable($colCodigo TEXT PRIMARY KEY, '
     '$colDescricao TEXT, $colQtd INTEGER, $colValor REAL)');
+
+    await db.execute('CREATE TABLE $pedidoTable($colPedidoId INTEGER PRIMARY KEY AUTOINCREMENT, '
+    '$colPedidoPath TEXT, $colPedidoRevendedora TEXT)');
   }
+  /* Para a tabela pedido */
+  Future<int> insertPedido(Pedido pedido) async{
+    Database db = await this.database;
+    var resultado = await db.insert(pedidoTable, pedido.toMap());
+    return resultado;
+  }
+
+  Future<Pedido> getPedido(int id) async{
+
+    Database db = await this.database;
+
+    List<Map> maps = await db.query(pedidoTable,
+    columns: [colPedidoId, colPedidoPath, colPedidoRevendedora],
+    where: "$colPedidoId = ?",
+    whereArgs: [id] );
+
+    if(maps.length > 0){
+      return Pedido.fromMap(maps.first);
+    }
+    else{
+      return null;
+    }
+  }
+
+  Future<List<Pedido>> getPedidos({String nome}) async{
+    Database db = await this.database;
+
+      var resultado = await db.query(pedidoTable);
+
+      List<Pedido> lista = resultado.isNotEmpty ? resultado.map(
+        (c) => Pedido.fromMap(c)).toList(): [];
+
+
+    if(nome != null && nome.isNotEmpty)
+    {
+      lista = lista.where((u) => (u.revendedora.toLowerCase().contains(nome.toLowerCase()))).toList();
+    }
+
+      return lista;
+  }
+
+  Future<int> updatePedido(Pedido pedido) async{
+    var db = await this.database;
+
+    var resultado = await db.update(pedidoTable, pedido.toMap(),
+    where: '$colPedidoId = ?',
+    whereArgs: [pedido.id]);
+
+    return resultado;
+  }
+
+  Future<int> deletePedido(int id) async{
+    var db = await this.database;
+
+    int resultado = await db.delete(pedidoTable, 
+    where: '$colPedidoId = ?',
+    whereArgs: [id]);
+
+    return resultado;
+  }
+
 
   //incluir no banco de dados
   Future<int> insertProduto(Produto produto) async{
