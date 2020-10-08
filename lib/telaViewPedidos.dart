@@ -1,40 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:projeto_pdm/helpers/database_helper.dart';
-import 'package:projeto_pdm/models/produto.dart';
-import 'package:projeto_pdm/telaViewPedidos.dart';
+import 'package:projeto_pdm/models/EscreveArquivos.dart';
+import 'package:projeto_pdm/models/pedidos.dart';
 
-import 'telaCadastroprodutos.dart';
-import 'telaPedidos.dart';
-
-class WidgetTelaProdutos extends StatefulWidget {
+class WidgetTelaViewPedidos extends StatefulWidget {
   @override
-  _WidgetTelaProdutosState createState() => _WidgetTelaProdutosState();
+  _WidgetTelaViewPedidosState createState() => _WidgetTelaViewPedidosState();
 }
 
-class _WidgetTelaProdutosState extends State<WidgetTelaProdutos> {
+class _WidgetTelaViewPedidosState extends State<WidgetTelaViewPedidos> {
   DatabaseHelper db = DatabaseHelper();
-  List<Produto> produtos = List<Produto>();
+  List<Pedido> pedidos = List<Pedido>();
 
-  final _codigoController = TextEditingController();
-
-  /*
-  _listaProdutos(BuildContext context, int index){
-    return GestureDetector(
-      child: Card(
-        child: Padding(padding: EdgeInsets.all(10),
-        child:Row(
-          children: <Widget>[
-              Text(produtos[index].codigo ?? ""),
-              Text(produtos[index].descricao ?? ""),
-              Text(produtos[index].qtd.toString() ?? ""),
-              Text(produtos[index].valor.toString() ?? "")
-          ],
-        )
-        )
-      ),
-    );
-  }
-  */
+  final _revendedoraController = TextEditingController();
 
   @override
   void initState(){
@@ -43,9 +21,9 @@ class _WidgetTelaProdutosState extends State<WidgetTelaProdutos> {
   }
 
   _exibeProdutos({String nome}){
-    db.getProdutos(nome: nome).then( (lista){
+    db.getPedidos(nome: nome).then( (lista){
       setState(() {
-        produtos = lista;
+        pedidos = lista;
       });
     });
     /*
@@ -71,7 +49,7 @@ class _WidgetTelaProdutosState extends State<WidgetTelaProdutos> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Meus produtos"),
+        title: Text("Meus Pedidos."),
         centerTitle: true,
       ),
 
@@ -98,6 +76,7 @@ class _WidgetTelaProdutosState extends State<WidgetTelaProdutos> {
     ),
     */
 
+      /*
       bottomNavigationBar: BottomAppBar(
         child: Container(
           height:  60.0,
@@ -128,22 +107,12 @@ class _WidgetTelaProdutosState extends State<WidgetTelaProdutos> {
                     icon: Icon(Icons.playlist_add),
                     tooltip: "Fazer listas de pedidos"
                   ),
-
-                  IconButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (BuildContext context) => WidgetTelaViewPedidos()));
-                    },
-                    icon: Icon(Icons.playlist_add),
-                    tooltip: "Visualizar listas de pedidos"
-                  ),
             ],
           ),
         ),
         color: Colors.blue,
       ),
+      */
 
     );
   }
@@ -151,7 +120,7 @@ class _WidgetTelaProdutosState extends State<WidgetTelaProdutos> {
   produtoField(){
     return Container(
       child: TextField(
-        controller: _codigoController,
+        controller: _revendedoraController,
         obscureText: false,
         onChanged: (text){
           _exibeProdutos(nome: text);
@@ -159,7 +128,7 @@ class _WidgetTelaProdutosState extends State<WidgetTelaProdutos> {
         decoration: InputDecoration(
           contentPadding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-          labelText: "Pesquisar por produto.",
+          labelText: "Pesquisar por pedido.",
           isDense: true,
         )
       )
@@ -173,23 +142,20 @@ class _WidgetTelaProdutosState extends State<WidgetTelaProdutos> {
                 
                 columnSpacing: 24,
               columns: [
-                DataColumn(label: Text("Código")),
-                DataColumn(label: Text("Qtd")),
-                DataColumn(label: Text("Descrição")),
-                DataColumn(label: Text("Valor")),
-                DataColumn(label: Text("Editar")),
+                DataColumn(label: Text("Revendedora")),
+                DataColumn(label: Text("Data de edição")),
+                DataColumn(label: Text("Visualizar")),
               ], 
-              rows: produtos.map((produto) => DataRow(
+              rows: pedidos.map((pedido) => DataRow(
                 cells: [
-                  DataCell(Text(produto.codigo),),
-                  DataCell(Text(produto.qtd.toString()),),
-                  DataCell(Text(produto.descricao),),
-                  DataCell(Text(produto.valor.toString()),),
+                  DataCell(Text(pedido.revendedora),),
+                  DataCell(Text(pedido.id.toString()),),
 
                   DataCell(IconButton(
-                    icon: Icon(Icons.edit), 
+                    icon: Icon(Icons.view_list), 
                     onPressed: (){
-                      _exibePaginaCadastroProdutos(produto: produto);
+                      ArquivoStorage a;
+                      print(a.readFile(pedido.path));
                     }
                   )
                   ),
@@ -199,31 +165,5 @@ class _WidgetTelaProdutosState extends State<WidgetTelaProdutos> {
               ),
           );
   }
-  
-  void _exibePaginaCadastroProdutos({Produto produto}) async{
-    final produtoRecebido = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) => WidgetCadastraProduto(produto: produto)));
 
-        if(produtoRecebido != null){
-          if(produtoRecebido == 'delete'){
-            //print('deletando');
-            await db.deleteProduto(produto.codigo);
-          }
-          else{
-            if(produto != null){
-              //print('alterando');
-              await db.updateProduto(produtoRecebido);
-            }
-            else{
-              //print('inserindo');
-              await db.insertProduto(produtoRecebido);
-            }
-          }
-          
-
-          _exibeProdutos();
-        }
-  }
 }

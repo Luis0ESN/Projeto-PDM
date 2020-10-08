@@ -1,11 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:projeto_pdm/helpers/database_helper.dart';
 import 'package:projeto_pdm/models/pedidos.dart';
 import 'package:projeto_pdm/models/produto.dart';
 
 import 'dart:io';
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
 class ArquivoStorage {
@@ -29,9 +27,9 @@ class ArquivoStorage {
     return File("$path/$name");
   }
 
-  Future<String> readFile() async {
+  Future<String> readFile(path) async {
     try{
-      final file = await _localFile;
+      final file = File("$path");
       String contents = await file.readAsString();
 
       return contents;
@@ -51,7 +49,7 @@ class ArquivoStorage {
     print('\n');
 
 
-    int _id = null;
+    int _id;
 
     Pedido pedido = Pedido(_id, "$path/$name", "$revendedora");
     await db.insertPedido(pedido);

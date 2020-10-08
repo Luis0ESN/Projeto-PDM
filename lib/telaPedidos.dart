@@ -80,6 +80,7 @@ class _WidgetPedidoState extends State<WidgetPedido> {
                       print(_revendedora);
                       print(_date);
                       print('\n');
+                      Navigator.pop(context);
                     },
                     icon: Icon(Icons.save),
                     tooltip: "Salvar lista."
